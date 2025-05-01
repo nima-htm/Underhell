@@ -6,11 +6,14 @@ import javafx.application.Platform;
 import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.Scene;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.media.MediaPlayer;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Rectangle;
+import javafx.scene.shape.SVGPath;
 import javafx.stage.Stage;
 
 import java.net.URL;
@@ -22,6 +25,8 @@ import java.util.Set;
 import javafx.scene.media.Media;
 import javafx.util.Duration;
 
+import javax.crypto.Cipher;
+
 public class BattleManager {
     private Stage stage;
     private Scene battleScene;
@@ -29,7 +34,7 @@ public class BattleManager {
     private Circle playerHeart;
     private Rectangle battleBox;
     private MediaPlayer mediaPlayer;
-
+    private ImageView heartView;
     private Alastor enemy;
     private Group attackLayer;
     private List<Node> attacks = new ArrayList<>();
@@ -41,12 +46,9 @@ public class BattleManager {
         this.stage = stage;
         this.root = new Group();
         this.battleScene = new Scene(root, 800, 650, Color.BLACK);
-
-
-
         setupUI();
-        setupPlayerHeart();
         playBattleMusic();
+        setupPlayerHeart();
         setupEnemy();
         setupControls();
         setupPlayerMovements();
@@ -62,7 +64,7 @@ public class BattleManager {
             MediaPlayer musicPlayer = new MediaPlayer(music);
             musicPlayer.setCycleCount(MediaPlayer.INDEFINITE);
             musicPlayer.setStartTime(Duration.seconds(3));
-            mediaPlayer.setStopTime(mediaPlayer.getMedia().getDuration());
+            musicPlayer.setStopTime(musicPlayer.getMedia().getDuration());
             musicPlayer.play();
         } catch (Exception e) {
             System.out.println("Could not play music: " + e.getMessage());
@@ -82,6 +84,7 @@ public class BattleManager {
             public void handle(long now) {
                 double x = playerHeart.getTranslateX();
                 double y = playerHeart.getTranslateY();
+
                 final double speed = 4;
 
                 double minX = battleBox.getX() + 15;
@@ -89,14 +92,24 @@ public class BattleManager {
                 double minY = battleBox.getY() + 15;
                 double maxY = battleBox.getY() + battleBox.getHeight() - 15;
 
-                if (activeKeys.contains(KeyCode.A) && x - speed >= minX)
+                if (activeKeys.contains(KeyCode.LEFT) && x - speed >= minX) {
                     playerHeart.setTranslateX(x - speed);
-                if (activeKeys.contains(KeyCode.D) && x + speed <= maxX)
+                    heartView.setTranslateX(x - speed -10);
+                }
+
+
+                if (activeKeys.contains(KeyCode.RIGHT) && x + speed <= maxX) {
                     playerHeart.setTranslateX(x + speed);
-                if (activeKeys.contains(KeyCode.W) && y - speed >= minY)
+                    heartView.setTranslateX(x + speed - 10);
+                }
+                if (activeKeys.contains(KeyCode.UP) && y - speed >= minY) {
                     playerHeart.setTranslateY(y - speed);
-                if (activeKeys.contains(KeyCode.S) && y + speed <= maxY)
+                    heartView.setTranslateY(y - speed - 10);
+                }
+                if (activeKeys.contains(KeyCode.DOWN) && y + speed <= maxY) {
                     playerHeart.setTranslateY(y + speed);
+                    heartView.setTranslateY(y + speed - 10);
+                }
             }
         };
         movement.start();
@@ -110,7 +123,7 @@ public class BattleManager {
 
 
     private void setupUI() {
-        battleBox = new Rectangle(200, 300, 400, 300);
+        battleBox = new Rectangle(175, 400, 450, 200);
         battleBox.setStroke(Color.WHITE);
         battleBox.setStrokeWidth(8);
         battleBox.setFill(Color.BLACK);
@@ -123,10 +136,18 @@ public class BattleManager {
     }
 
     private void setupPlayerHeart() {
-        playerHeart = new Circle(10, Color.RED);
+        playerHeart = new Circle(10, Color.GRAY);
         playerHeart.setTranslateX(400);
         playerHeart.setTranslateY(450);
-        root.getChildren().add(playerHeart);
+        playerHeart.setVisible(true);
+
+        heartView = new ImageView(new Image(getClass().getResource("/animation/player/heart.png").toExternalForm()));
+        heartView.setFitWidth(20);
+        heartView.setFitHeight(20);
+        heartView.setTranslateX(playerHeart.getTranslateX() - 10);
+        heartView.setTranslateY(playerHeart.getTranslateY() - 10);
+        root.getChildren().addAll(playerHeart, heartView);
+
     }
 
     private void endTurn() {
