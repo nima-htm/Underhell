@@ -5,23 +5,29 @@ import core.Character;
 import javafx.animation.AnimationTimer;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
+import javafx.scene.Group;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.util.Duration;
 
-
+import java.lang.reflect.Array;
+import java.util.*;
 
 public class Alastor extends Character {
-    private final long DEFAULT_DELAY = 150_000_000;
-    private int currentFrame = 0;
-    private long lastFrameTime = 0;
-
 
     private Image[] frames;
     private ImageView view;
     private Timeline animation;
     private AnimationTimer animationTimer;
 
+    private final long DEFAULT_DELAY = 150_000_000;
+    private int currentFrame = 0;
+    private long lastFrameTime = 0;
+    private List<String> dialogues = Arrays.asList(
+      "Dear, if I wanted to hurt anyone here... ",
+            "I would have done so already.",
+            "I don't think there's anything left that could save such loathsome sinners"
+    ); private int dialogueIndex = 0;
     public Alastor() {
         super("Alastor", 300);
 
@@ -50,18 +56,30 @@ public class Alastor extends Character {
                 new Image(getClass().getResource("/animation/alastor/12.PNG").toExternalForm()),
                 new Image(getClass().getResource("/animation/alastor/13.PNG").toExternalForm()),
         };
-
         view = new ImageView(frames[0]);
         view.setFitWidth(320);
         view.setFitHeight(320);
         view.setTranslateX(235);
         view.setTranslateY(15);
-
         startAnimation();
     }
+
+
+    public String getNextDialogue() {
+        if (dialogueIndex < dialogues.size()) {
+            return dialogues.get(dialogueIndex++);
+        } else {
+            return "Now... stay tuned ~";
+        }
+    }
+    public void resetDialogues() {
+        dialogueIndex = 0;
+    }
+
     public ImageView getView() {
         return view;
     }
+
     public void startAnimation() {
         animationTimer = new AnimationTimer() {
             @Override
@@ -77,6 +95,7 @@ public class Alastor extends Character {
         };
         animationTimer.start();
     }
+
     private long getDelayForFrame(int frameIndex) {
         return switch (frameIndex) {
             case 0, 10 -> 3_000_000_000L;

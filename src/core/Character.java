@@ -8,8 +8,7 @@ public abstract class Character {
     public Character(String name, int hp){
         this.name = name;
         this.hp = hp;
-
-    }
+     }
 
     public int getHp() {
         return hp;
