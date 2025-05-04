@@ -1,7 +1,9 @@
 package core;
 
+import javafx.animation.*;
+import javafx.geometry.Bounds;
+import utils.projectUtilities;
 import characters.Alastor;
-import javafx.animation.AnimationTimer;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.scene.Group;
@@ -14,6 +16,7 @@ import javafx.scene.layout.*;
 import javafx.scene.media.MediaPlayer;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
+import javafx.scene.shape.Line;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.shape.SVGPath;
 import javafx.scene.text.Font;
@@ -30,8 +33,6 @@ import java.util.Set;
 
 import javafx.scene.media.Media;
 import javafx.util.Duration;
-
-import javax.crypto.Cipher;
 
 public class BattleManager {
 
@@ -58,10 +59,11 @@ public class BattleManager {
         this.root = new Group();
         this.battleScene = new Scene(root, 800, 650, Color.BLACK);
         setupUI();
-        setupPlayerOptions();
         playBattleMusic();
         setupPlayerHeart();
         setupEnemy();
+        setupEnemyHPBar();
+        setupPlayerOptions();
         setupControls();
         setupPlayerMovements();
         stage.setScene(battleScene);
@@ -168,7 +170,7 @@ public class BattleManager {
         textFlow.setBorder(new Border(new BorderStroke(Color.WHITE, BorderStrokeStyle.SOLID, new CornerRadii(4), new BorderWidths(2))));
 
         enemyDialogueBox = new StackPane(textFlow);
-        enemyDialogueBox.setVisible(true);
+        enemyDialogueBox.setVisible(false);
 
 
         enemyDialogueBox.setLayoutX(enemy.getView().getLayoutX() + 520);
@@ -228,6 +230,12 @@ public class BattleManager {
             if (labels[i].equals("Talk")) {
                 option_box.setOnMouseClicked(e -> startDialogueSequence());
             }
+            if (labels[i].equals("Fight")) {
+                option_box.setOnMouseClicked(e -> playAttackAnimation(() -> {
+                    applyDamageToEnemy(7 + (int) (Math.random() * ((15 - 7) + 1)));
+                }));
+
+            }
             label.setFont(font);
             label.setFill(Color.WHITE);
             label.setStyle("-fx-font-size: 18px; -fx-font-weight: bold;");
@@ -252,4 +260,75 @@ public class BattleManager {
         playerHeart.setVisible(true);
         playerOptions.setVisible(true);
     }
+
+    private void playAttackAnimation(Runnable onFinish) {
+        new projectUtilities(enemy.getView()).shakeEnemy();
+
+        try {
+            new projectUtilities("/sounds/hit_sound.mp3").playHitSound();
+        } catch (Exception ex) {
+            System.out.println("Could not play hit sound: " + ex.getMessage());
+        }
+        Bounds enemyBounds = enemy.getView().localToScene(enemy.getView().getBoundsInLocal());
+
+        double centerX = (enemyBounds.getMinX() + enemyBounds.getMaxX()) / 2;
+        double centerY = (enemyBounds.getMinY() + enemyBounds.getMaxY()) / 2;
+
+        Line line1 = new Line(-30, -30, 30, 30);
+        Line line2 = new Line(30, -30, -30, 30);
+
+        line1.setStroke(Color.RED);
+        line2.setStroke(Color.RED);
+        line1.setStrokeWidth(5);
+        line2.setStrokeWidth(5);
+
+        Group redCross = new Group(line1, line2);
+        redCross.setLayoutX(centerX);
+        redCross.setLayoutY(centerY);
+        root.getChildren().add(redCross);
+        ScaleTransition scale = new ScaleTransition(Duration.seconds(0.3), redCross);
+        scale.setFromX(0.2);
+        scale.setFromY(0.2);
+        scale.setToX(1.2);
+        scale.setToY(1.2);
+        scale.setAutoReverse(true);
+        scale.setCycleCount(2);
+
+        scale.setOnFinished(e -> {
+            root.getChildren().remove(redCross);
+            onFinish.run();
+        });
+
+        scale.play();
+    }
+
+
+    private Rectangle enemyHPBarBack;
+    private Rectangle enemyHPBarFront;
+
+    private void setupEnemyHPBar() {
+        enemyHPBarBack = new Rectangle(200, 20, Color.DARKRED);
+        enemyHPBarFront = new Rectangle(200, 20, Color.LIMEGREEN);
+
+        enemyHPBarBack.setLayoutX(enemy.getView().getLayoutX() + 30);
+        enemyHPBarBack.setLayoutY(enemy.getView().getLayoutY() - 30);
+        enemyHPBarFront.setLayoutX(enemyHPBarBack.getLayoutX());
+        enemyHPBarFront.setLayoutY(enemyHPBarBack.getLayoutY());
+
+        root.getChildren().addAll(enemyHPBarBack, enemyHPBarFront);
+
+    }
+
+    private void applyDamageToEnemy(int damage) {
+        double currentWidth = enemyHPBarFront.getWidth();
+        double newWidth = Math.max(0, currentWidth - damage);
+
+        Timeline timeline = new Timeline();
+        KeyValue kv = new KeyValue(enemyHPBarFront.widthProperty(), newWidth, Interpolator.EASE_BOTH);
+        KeyFrame kf = new KeyFrame(Duration.seconds(0.5), kv);
+        timeline.getKeyFrames().add(kf);
+        timeline.play();
+    }
+
 }
+

@@ -25,7 +25,7 @@ public class Alastor extends Character {
     private long lastFrameTime = 0;
     private List<String> dialogues = Arrays.asList(
       "Dear, if I wanted to hurt anyone here... ",
-            "I would have done so already.",
+            "...I would have done so already.",
             "I don't think there's anything left that could save such loathsome sinners"
     ); private int dialogueIndex = 0;
     public Alastor() {
@@ -117,4 +117,5 @@ public class Alastor extends Character {
     public void strongAttack() {
         System.out.println("Alastor used Hellfire Burst!");
     }
+
 }
